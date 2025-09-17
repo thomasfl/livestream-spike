@@ -5,6 +5,7 @@ import { Email } from '@/types/email'
 import { Tooltip, Modal } from 'antd'
 import { VideoCameraOutlined, ExclamationCircleOutlined } from '@ant-design/icons'
 import { useRouter } from 'next/navigation'
+import { useAllViewers } from '@/hooks/useViewerTracking'
 
 export default function Home() {
   const [emails, setEmails] = useState<Email[]>([])
@@ -14,6 +15,7 @@ export default function Home() {
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false)
   const [emailToDelete, setEmailToDelete] = useState<Email | null>(null)
   const router = useRouter()
+  const { allViewers } = useAllViewers()
 
   // Fetch emails on component mount
   useEffect(() => {
@@ -55,7 +57,7 @@ export default function Home() {
       } else {
         setMessage(data.error || 'An error occurred')
       }
-    } catch (error) {
+    } catch {
       setMessage('An error occurred while adding the email')
     } finally {
       setLoading(false)
@@ -92,7 +94,7 @@ export default function Home() {
         const data = await response.json()
         setMessage(data.error || 'Failed to delete email')
       }
-    } catch (error) {
+    } catch {
       setMessage('An error occurred while deleting the email')
     } finally {
       setIsDeleteModalVisible(false)
@@ -105,8 +107,8 @@ export default function Home() {
     setEmailToDelete(null)
   }
 
-  const handleViewLivestream = (emailAddress: string) => {
-    router.push(`/livestream?email=${encodeURIComponent(emailAddress)}`)
+  const handleViewLivestream = (emailId: string) => {
+    router.push(`/livestream?id=${encodeURIComponent(emailId)}`)
   }
 
   return (
@@ -126,14 +128,14 @@ export default function Home() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
+                Add livestream user
               </label>
               <input
                 type="email"
                 id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email address"
+                placeholder="Enter users email address"
                 required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
@@ -143,7 +145,7 @@ export default function Home() {
               disabled={loading}
               className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {loading ? 'Adding...' : 'Add Email'}
+              {loading ? 'Adding...' : 'Add user'}
             </button>
           </form>
 
@@ -182,7 +184,13 @@ export default function Home() {
                       Email Address
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      IP Address
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Date Added
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Live Viewers
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Actions
@@ -199,7 +207,53 @@ export default function Home() {
                         {email.email}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex items-center">
+                          {email.ip_address ? (
+                            <>
+                              <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
+                              <span className="font-mono text-xs">{email.ip_address}</span>
+                              {email.last_viewed_at && (
+                                <div className="ml-2 text-xs text-gray-400">
+                                  Last: {formatDate(email.last_viewed_at)}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <div className="w-2 h-2 bg-gray-300 rounded-full mr-2" />
+                              <span className="text-gray-400 text-xs">Not viewed</span>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(email.created_at)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex items-center">
+                          <div className={`w-2 h-2 rounded-full mr-2 ${
+                            allViewers[email.id]?.length > 0 ? 'bg-green-500' : 'bg-gray-300'
+                          }`} />
+                          <span className={allViewers[email.id]?.length > 0 ? 'text-green-600 font-medium' : 'text-gray-400'}>
+                            {allViewers[email.id]?.length || 0}
+                          </span>
+                          {allViewers[email.id]?.length > 0 && (
+                            <Tooltip 
+                              title={
+                                <div>
+                                  <div className="font-semibold mb-1">Active Viewers:</div>
+                                  {allViewers[email.id].map((viewer) => (
+                                    <div key={viewer.userId} className="text-xs">
+                                      {viewer.userEmail}
+                                    </div>
+                                  ))}
+                                </div>
+                              }
+                            >
+                              <span className="ml-1 text-green-500 cursor-help">ⓘ</span>
+                            </Tooltip>
+                          )}
+                        </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <div className="flex items-center space-x-2">
@@ -226,7 +280,7 @@ export default function Home() {
                           </Tooltip>
                           <Tooltip title="view livestream as user">
                             <button 
-                              onClick={() => handleViewLivestream(email.email)}
+                              onClick={() => handleViewLivestream(email.id)}
                               className="text-blue-600 hover:text-blue-800 transition-colors duration-200"
                             >
                               <VideoCameraOutlined className="text-lg" />
