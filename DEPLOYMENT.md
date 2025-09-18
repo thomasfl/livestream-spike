@@ -24,16 +24,20 @@ This guide will walk you through deploying the Email Collection System to Supaba
 3. Copy and paste the contents of `supabase-schema.sql`:
 
 ```sql
--- Create emails table
+-- Create emails table with all required columns
 CREATE TABLE IF NOT EXISTS emails (
   id VARCHAR(8) PRIMARY KEY,
   email VARCHAR(255) NOT NULL UNIQUE,
+  ip_address INET,
+  last_viewed_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Create indexes
 CREATE INDEX IF NOT EXISTS idx_emails_email ON emails(email);
 CREATE INDEX IF NOT EXISTS idx_emails_created_at ON emails(created_at);
+CREATE INDEX IF NOT EXISTS idx_emails_ip_address ON emails(ip_address);
+CREATE INDEX IF NOT EXISTS idx_emails_last_viewed_at ON emails(last_viewed_at);
 
 -- Enable Row Level Security
 ALTER TABLE emails ENABLE ROW LEVEL SECURITY;
@@ -121,16 +125,23 @@ git push -u origin main
 
 ### Common Issues
 
-1. **"Invalid supabaseUrl" error**:
+1. **"supabaseUrl is required" error**:
+   - This means environment variables are not set in Vercel
+   - Go to Vercel Dashboard → Your Project → Settings → Environment Variables
+   - Make sure all three variables are added: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`
+   - Set them for **Production**, **Preview**, AND **Development** environments
+   - After adding variables, go to Deployments tab and click "Redeploy"
+
+2. **"Invalid supabaseUrl" error**:
    - Make sure your environment variables are set correctly in Vercel
    - Check that the Supabase URL doesn't have trailing slashes
 
-2. **Database connection errors**:
+3. **Database connection errors**:
    - Verify your Supabase project is active
    - Check that the database schema was created successfully
    - Ensure your API keys are correct
 
-3. **Build failures**:
+4. **Build failures**:
    - Check the Vercel build logs for specific error messages
    - Make sure all dependencies are listed in `package.json`
 

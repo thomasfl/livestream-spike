@@ -13,11 +13,11 @@ function LivestreamContent() {
   const [email, setEmail] = useState<Email | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Initialize viewer tracking with default values, will update when email is loaded
   const { viewers, windowCounts, isConnected, viewerCount } = useViewerTracking(
-    id || 'unknown', 
-    email?.id || 'anonymous', 
+    id || 'unknown',
+    email?.id || 'anonymous',
     email?.email || 'anonymous@example.com'
   )
 
@@ -32,12 +32,12 @@ function LivestreamContent() {
       try {
         const response = await fetch('/api/emails')
         const data = await response.json()
-        
+
         if (response.ok) {
           const foundEmail = data.data.find((e: Email) => e.id === id)
           if (foundEmail) {
             setEmail(foundEmail)
-            
+
             // Update IP address when user views livestream
             try {
               await fetch(`/api/emails/${id}/ip`, {
@@ -68,14 +68,14 @@ function LivestreamContent() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <Link 
+          <Link
             href="/"
             className="inline-flex items-center text-blue-600 hover:text-blue-800 transition-colors duration-200 mb-4"
           >
             <ArrowLeftOutlined className="mr-2" />
             Back to Email List
           </Link>
-          
+
           <div className="text-center">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Livestream View
@@ -97,16 +97,15 @@ function LivestreamContent() {
         {/* Livestream Content Area */}
         <div className="bg-white rounded-lg shadow-md p-8">
           <div className="text-center">
-            <div className="bg-gray-100 rounded-lg p-12 mb-6">
-              <div className="text-6xl text-gray-400 mb-4">📹</div>
-              <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-                Livestream Player
-              </h2>
-              <p className="text-gray-500">
-                Livestream content would be displayed here
-              </p>
+            <div className="bg-gray-100 rounded-lg ">
+              <div style={{ padding: "56.25% 0 0 0", position: "relative" }}>
+                <iframe src="https://vimeo.com/event/5389772/embed/interaction" 
+                allow="autoplay; fullscreen; picture-in-picture; encrypted-media; web-share" 
+                referrerPolicy="strict-origin-when-cross-origin" allowFullScreen={true} 
+                style={{position:"absolute",top:"0",left:"0", width:"100%", height:"100%"}}/>
+                </div>
             </div>
-            
+
             {loading && (
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <p className="text-gray-600">
@@ -114,7 +113,7 @@ function LivestreamContent() {
                 </p>
               </div>
             )}
-            
+
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <p className="text-red-800">
@@ -122,7 +121,7 @@ function LivestreamContent() {
                 </p>
               </div>
             )}
-            
+
             {email && (
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <p className="text-blue-800">
@@ -147,7 +146,7 @@ function LivestreamContent() {
                     </span>
                   </div>
                 </div>
-                
+
                 {viewers.length > 0 ? (
                   <div className="space-y-2">
                     {viewers.map((viewer) => (
@@ -181,7 +180,7 @@ function LivestreamContent() {
                 <h3 className="text-lg font-semibold text-blue-800 mb-3">
                   Browser Windows by User
                 </h3>
-                
+
                 <div className="space-y-2">
                   {windowCounts.map((userWindow) => (
                     <div key={userWindow.userId} className="flex items-center justify-between bg-white rounded-lg p-3 border border-blue-100">
